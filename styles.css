@@ -1,0 +1,128 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@font-face {
+    font-family: "everett";
+    src: url("/everett-regular.otf") format("opentype");
+    font-weight: 400;
+  }
+  
+  @font-face {
+    font-family: "everett";
+    src: url("/everett-medium.otf") format("opentype");
+    font-weight: 500;
+  }
+
+body {
+    background-color: black;
+    overflow: hidden;
+    
+}
+
+h1 {
+    font-family: "everett";
+    font-weight: 500; /* Medium */
+    color: #E5E5E5;
+    font-size: 1.6em;
+}
+
+h2 {
+    font-family: "everett";
+    font-family: "MyFont", sans-serif;
+    font-weight: 400; /* Regular */
+    color: white;
+}
+
+#logo {
+    display: inline-flex;
+align-items: center;
+gap: 0.4em;
+}
+
+#centre {
+    display: inline-flex;
+align-items: center;
+gap: 22px;
+}
+
+#pg-centre {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+#bouncing-logo {
+    position: absolute;
+    will-change: transform;
+    width: 200px;
+    height: 200px;
+} 
+
+.cursor-image {
+    width: 100%; /* Make the image take up the full width of the container */
+    height: 100%; /* Make the image take up the full height of the container */
+    object-fit: contain; /* Preserve the original aspect ratio */
+    object-position: center; /* Center the image within the container */
+  }
+  
+
+  .channel-input-wrapper {
+    position: absolute;
+    top: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1vw;
+    align-items: center;
+    z-index: 10;
+    
+  }
+
+  #channel-url {
+    
+  }
+  
+  #channel-url {
+    font-family: everett;
+    font-weight: 400;
+    color: #E5E5E5;
+    background: #323232;
+    width: 20vw;
+    padding: 0.7em 1em;
+    font-size: 1em;
+    border-radius: 0.8em;
+    border: none;
+  }
+  
+  #change-channel-btn {
+    border-radius: 0.8em;
+    background: #323232;
+    font-family: everett;
+    color: #989898;
+    font-weight: 500; /* Medium */
+
+    padding: 0.7em 1em;
+    font-size: 1em;
+    border: none;
+ 
+    cursor: pointer;
+    transition: ease-in-out 0.2s;
+  }
+  
+  #change-channel-btn:hover {
+    color: #E5E5E5;
+    transition: ease-in-out 0.2s;
+
+
+  }
+  

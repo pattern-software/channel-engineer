@@ -1,0 +1,20 @@
+.logo-trail {
+    position: relative;
+}
+
+#bouncing-logo {
+    position: absolute;
+    transition: transform 0.5s ease-out;
+    filter: blur(0);
+}
+
+#bouncing-logo.moving {
+    filter: blur(2px);
+}
+
+.trail-element {
+    position: absolute;
+    pointer-events: none;
+    transition: opacity 0.3s ease-out;
+    filter: blur(14px);
+} 
