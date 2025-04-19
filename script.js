@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let mainImage = null;
   let isInitialized = false;
   
-  const TRAIL_DELAY = 200;
   const IMAGE_CHANGE_DISTANCE = 200;
+  const TRAIL_DELAY = window.innerWidth < 768 ? 150 : 200; // Faster trail on mobile
   let images = [];
 
   // Default channel setup
@@ -96,8 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
     mainImage = document.createElement('img');
     mainImage.src = images[currentImageIndex];
     mainImage.classList.add('cursor-image');
-    mainImage.style.width = '20vw';
-    mainImage.style.height = '20vw';
     mainImage.style.position = 'absolute';
     mainImage.style.mask = 
       'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)';
@@ -109,8 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(mainImage);
 
     if (!isInitialized) {
-      const initialX = container.clientWidth/2 - mainImage.clientWidth/2;
-      const initialY = container.clientHeight/2 - mainImage.clientHeight/2;
+      const initialX = container.clientWidth / 2 - mainImage.clientWidth / 2;
+      const initialY = container.clientHeight / 2 - mainImage.clientHeight / 2;
       
       mainImage.style.transform = 
         `translate(${initialX}px, ${initialY}px) scale(0)`;
@@ -119,7 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
           `translate(${initialX}px, ${initialY}px) scale(1)`;
       }, 100);
 
-      container.addEventListener('mousemove', updatePosition);
+      // Add mouse and touch event listeners
+      container.addEventListener('mousemove', handleMove);
+      container.addEventListener('touchstart', handleTouchStart, { passive: false });
+      container.addEventListener('touchmove', handleMove, { passive: false });
+      container.addEventListener('touchend', handleTouchEnd);
       isInitialized = true;
     }
 
@@ -131,8 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const trail = document.createElement('img');
     trail.src = images[currentImageIndex];
     trail.classList.add('trail-element');
-    trail.style.width = '20vw';
-    trail.style.height = '20vw';
     trail.style.position = 'absolute';
     trail.style.transform = `translate(${x}px, ${y}px) scale(0)`;
     trail.style.opacity = '1';
@@ -153,15 +153,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
-  function updatePosition(event) {
+  function handleMove(event) {
+    event.preventDefault(); // Prevent scrolling on touchmove
+    const isTouch = event.type === 'touchmove';
+    const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     const imageWidth = mainImage.clientWidth;
     const imageHeight = mainImage.clientHeight;
     const rect = container.getBoundingClientRect();
     
-    const cursorX = event.clientX - rect.left - imageWidth/2;
-    const cursorY = event.clientY - rect.top - imageHeight/2;
+    const cursorX = clientX - rect.left - imageWidth / 2;
+    const cursorY = clientY - rect.top - imageHeight / 2;
     
     const maxX = containerWidth - imageWidth;
     const maxY = containerHeight - imageHeight;
@@ -204,6 +209,17 @@ document.addEventListener('DOMContentLoaded', () => {
     lastPosition = { x: constrainedX, y: constrainedY };
   }
 
+  function handleTouchStart(event) {
+    event.preventDefault(); // Prevent default touch behavior
+    const touch = event.touches[0];
+    handleMove({ type: 'touchmove', touches: [{ clientX: touch.clientX, clientY: touch.clientY }] });
+  }
+
+  function handleTouchEnd(event) {
+    // Optional: Clear trail or reset state if needed
+    lastTrailTime = 0; // Allow immediate trail on next touch
+  }
+
   // Channel change handler
   document.getElementById('change-channel-btn').addEventListener('click', async () => {
     const input = document.getElementById('channel-url');
@@ -211,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const slug = extractChannelSlug(url);
     
     if (!slug) {
-      alert('Please enter a valid Are.na channel URL.');
+      alert('Paste an Are.na channel link to switch channels.');
       return;
     }
 
@@ -238,4 +254,22 @@ document.addEventListener('DOMContentLoaded', () => {
       initializeCursorImage();
     }
   })();
+
+  // Select the input element
+  const channelInput = document.getElementById('channel-url');
+
+  // Function to update placeholder based on window width
+  function updatePlaceholder() {
+    if (window.innerWidth < 768) {
+      channelInput.placeholder = 'Paste link'; // Short placeholder for mobile
+    } else {
+      channelInput.placeholder = 'Paste Are.na channel link'; // Long placeholder for desktop
+    }
+  }
+
+  // Run on page load
+  updatePlaceholder();
+
+  // Run when window is resized
+  window.addEventListener('resize', updatePlaceholder);
 });
