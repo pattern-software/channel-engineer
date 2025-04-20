@@ -6,13 +6,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let lastPosition = { x: 0, y: 0 };
   let lastImageChangePosition = { x: 0, y: 0 };
+  let cumulativeDistance = 0; // Track total distance since last image change
   let currentImageIndex = 0;
   let lastTrailTime = 0;
   let mainImage = null;
   let isInitialized = false;
+  let trailCount = 0;
+  let lastUpdateTime = 0;
+  let isFCycling = false; // Track if 'F' is held
+  let cycleInterval = null; // Interval for holding 'F'
+  const MAX_TRAILS = 5; // Limit simultaneous trail elements
+  let pendingMove = null; // Store latest move event
+  let originalImageUrls = []; // Store original image URLs
   
-  const IMAGE_CHANGE_DISTANCE = 200;
-  const TRAIL_DELAY = window.innerWidth < 768 ? 150 : 200; // Faster trail on mobile
+  const IMAGE_CHANGE_DISTANCE = 200; // Fixed distance for image change
+  const TRAIL_DELAY = window.innerWidth < 768 ? 200 : 250; // Balanced for smoothness
+  const CYCLE_INTERVAL = 300; // Delay for holding 'F' (ms)
   let images = [];
 
   // Default channel setup
@@ -33,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function formatDisplayUrl(url) {
     try {
       const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
-      const hostname = parsed.hostname.replace('www.', ''); // Remove "www." prefix
+      const hostname = parsed.hostname.replace('www.', '');
       return `${hostname}${parsed.pathname}`;
     } catch {
       return url;
@@ -46,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasMorePages = true;
     
     images = [];
+    originalImageUrls = [];
 
     while (hasMorePages) {
       try {
@@ -63,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
           block => block.image?.original?.url
         );
         images.push(...imageBlocks.map(block => block.image.original.url));
+        originalImageUrls.push(...imageBlocks.map(block => block.image.original.url));
         hasMorePages = data.contents.length === perPage;
         page++;
       } catch (error) {
@@ -72,39 +83,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (images.length > 0) {
-      shuffleArray(images);
+      // Preload images and ensure original URLs are synced
+      images.forEach(url => {
+        const img = new Image();
+        img.src = url;
+      });
+      shuffleArrays(images, originalImageUrls); // Shuffle both arrays in sync
       return true;
     }
     console.error("No images found");
     return false;
   }
 
-  function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
+  function shuffleArrays(array1, array2) {
+    for (let i = array1.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
+      [array1[i], array1[j]] = [array1[j], array1[i]];
+      [array2[i], array2[j]] = [array2[j], array2[i]];
     }
   }
 
   function initializeCursorImage() {
     if (!images.length) return;
     
-    if (mainImage) {
-      mainImage.remove();
+    if (!mainImage) {
+      mainImage = document.createElement('img');
+      mainImage.classList.add('cursor-image');
+      mainImage.style.position = 'absolute';
+      mainImage.style.mask = 
+        'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)';
+      mainImage.style.webkitMask = 
+        'linear-gradient(to right, 0%, black 5%, black 95%, transparent 100%)';
+      mainImage.style.transition = 
+        'transform 0.1s linear'; // Faster transition for responsiveness
+      container.appendChild(mainImage);
     }
 
-    mainImage = document.createElement('img');
     mainImage.src = images[currentImageIndex];
-    mainImage.classList.add('cursor-image');
-    mainImage.style.position = 'absolute';
-    mainImage.style.mask = 
-      'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)';
-    mainImage.style.webkitMask = 
-      'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)';
-    mainImage.style.transition = 
-      'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-    
-    container.appendChild(mainImage);
 
     if (!isInitialized) {
       const initialX = container.clientWidth / 2 - mainImage.clientWidth / 2;
@@ -117,19 +132,92 @@ document.addEventListener('DOMContentLoaded', () => {
           `translate(${initialX}px, ${initialY}px) scale(1)`;
       }, 100);
 
-      // Add mouse and touch event listeners
-      container.addEventListener('mousemove', handleMove);
+      // Add event listeners
+      container.addEventListener('mousemove', queueMove);
       container.addEventListener('touchstart', handleTouchStart, { passive: false });
-      container.addEventListener('touchmove', handleMove, { passive: false });
+      container.addEventListener('touchmove', queueMove, { passive: false });
       container.addEventListener('touchend', handleTouchEnd);
+      // Add keyboard listeners for spacebar and 'F'
+      document.addEventListener('keydown', handleKeydown);
+      document.addEventListener('keyup', handleKeyup);
       isInitialized = true;
     }
 
     lastPosition = { x: initialX, y: initialY };
     lastImageChangePosition = { x: initialX, y: initialY };
+    cumulativeDistance = 0; // Initialize cumulative distance
+  }
+
+  function cycleBackward() {
+    if (!images.length) return;
+    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length; // Decrement with wrap-around
+    mainImage.src = images[currentImageIndex];
+  }
+
+  async function downloadCurrentImage() {
+    if (!images.length || currentImageIndex >= originalImageUrls.length) {
+      alert('No image available to download.');
+      return;
+    }
+
+    const url = originalImageUrls[currentImageIndex];
+    try {
+      // Fetch image as blob
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const blob = await response.blob();
+
+      // Extract filename from URL or use fallback
+      const filename = url.split('/').pop().split('?')[0] || `image-${currentImageIndex}`;
+
+      // Create object URL and trigger download
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error('Download Error:', error);
+      alert('Failed to download the image. Please try again.');
+    }
+  }
+
+  function handleKeydown(event) {
+    if (window.innerWidth < 768) return; // Restrict to desktop
+
+    if (event.key === ' ') {
+      event.preventDefault(); // Prevent scrolling
+      downloadCurrentImage();
+    } else if (event.key.toLowerCase() === 'f' && !isFCycling) {
+      event.preventDefault(); // Prevent browser actions
+      isFCycling = true;
+      cycleBackward(); // Immediate cycle on press
+      cycleInterval = setInterval(cycleBackward, CYCLE_INTERVAL); // Start cycling for hold
+    }
+  }
+
+  function handleKeyup(event) {
+    if (window.innerWidth < 768) return; // Restrict to desktop
+
+    if (event.key.toLowerCase() === 'f') {
+      isFCycling = false;
+      clearInterval(cycleInterval); // Stop cycling
+      cycleInterval = null;
+    }
   }
 
   function createTrailElement(x, y) {
+    if (trailCount >= MAX_TRAILS) return;
+    trailCount++;
+
     const trail = document.createElement('img');
     trail.src = images[currentImageIndex];
     trail.classList.add('trail-element');
@@ -137,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     trail.style.transform = `translate(${x}px, ${y}px) scale(0)`;
     trail.style.opacity = '1';
     trail.style.transition = 
-      'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease';
+      'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease';
     
     trailContainer.appendChild(trail);
     
@@ -149,12 +237,29 @@ document.addEventListener('DOMContentLoaded', () => {
       trail.style.opacity = '0';
       setTimeout(() => {
         trailContainer.removeChild(trail);
-      }, 400);
-    }, 1000);
+        trailCount--;
+      }, 300);
+    }, 500); // Total duration: 800ms
   }
 
-  function handleMove(event) {
-    event.preventDefault(); // Prevent scrolling on touchmove
+  function queueMove(event) {
+    event.preventDefault();
+    pendingMove = event; // Store latest event
+    if (!lastUpdateTime) {
+      requestAnimationFrame(updatePosition);
+    }
+  }
+
+  function updatePosition(timestamp) {
+    if (!pendingMove) {
+      lastUpdateTime = 0;
+      return;
+    }
+
+    lastUpdateTime = timestamp;
+    const event = pendingMove;
+    pendingMove = null;
+
     const isTouch = event.type === 'touchmove';
     const clientX = isTouch ? event.touches[0].clientX : event.clientX;
     const clientY = isTouch ? event.touches[0].clientY : event.clientY;
@@ -173,31 +278,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const constrainedX = Math.max(0, Math.min(cursorX, maxX));
     const constrainedY = Math.max(0, Math.min(cursorY, maxY));
 
-    const distanceMoved = Math.sqrt(
-      Math.pow(constrainedX - lastImageChangePosition.x, 2) +
-      Math.pow(constrainedY - lastImageChangePosition.y, 2)
-    );
+    // Update main image position immediately
+    mainImage.style.transform = 
+      `translate(${constrainedX}px, ${constrainedY}px) scale(1)`;
 
-    if (distanceMoved > IMAGE_CHANGE_DISTANCE) {
-      currentImageIndex = (currentImageIndex + 1) % images.length;
+    // Calculate distance moved since last position
+    const deltaDistance = Math.sqrt(
+      Math.pow(constrainedX - lastPosition.x, 2) +
+      Math.pow(constrainedY - lastPosition.y, 2)
+    );
+    cumulativeDistance += deltaDistance;
+
+    if (cumulativeDistance >= IMAGE_CHANGE_DISTANCE) {
+      currentImageIndex = (currentImageIndex + 1) % images.length; // Forward cycle
       mainImage.src = images[currentImageIndex];
-      
-      const offsetX = (Math.random() - 0.5) * 400;
-      const offsetY = (Math.random() - 0.5) * 400;
-      const newX = Math.max(0, Math.min(constrainedX + offsetX, maxX));
-      const newY = Math.max(0, Math.min(constrainedY + offsetY, maxY));
-      
-      mainImage.style.transform = 
-        `translate(${newX}px, ${newY}px) scale(0)`;
-      setTimeout(() => {
-        mainImage.style.transform = 
-          `translate(${newX}px, ${newY}px) scale(1)`;
-      }, 50);
-      
       lastImageChangePosition = { x: constrainedX, y: constrainedY };
-    } else {
-      mainImage.style.transform = 
-        `translate(${constrainedX}px, ${constrainedY}px) scale(1)`;
+      cumulativeDistance = 0; // Reset cumulative distance
     }
 
     const currentTime = Date.now();
@@ -207,17 +303,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     lastPosition = { x: constrainedX, y: constrainedY };
+
+    // Schedule next update if more events are pending
+    if (pendingMove) {
+      requestAnimationFrame(updatePosition);
+    } else {
+      lastUpdateTime = 0;
+    }
   }
 
   function handleTouchStart(event) {
-    event.preventDefault(); // Prevent default touch behavior
+    event.preventDefault();
     const touch = event.touches[0];
-    handleMove({ type: 'touchmove', touches: [{ clientX: touch.clientX, clientY: touch.clientY }] });
+    queueMove({ type: 'touchmove', touches: [{ clientX: touch.clientX, clientY: touch.clientY }] });
   }
 
   function handleTouchEnd(event) {
-    // Optional: Clear trail or reset state if needed
-    lastTrailTime = 0; // Allow immediate trail on next touch
+    lastTrailTime = 0;
+    pendingMove = null;
+    lastUpdateTime = 0;
   }
 
   // Channel change handler
@@ -231,24 +335,30 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Update display to formatted version without "www."
     input.value = formatDisplayUrl(url);
 
     currentImageIndex = 0;
-    document.querySelectorAll('.cursor-image, .trail-element').forEach(el => el.remove());
+    trailCount = 0;
+    cumulativeDistance = 0; // Reset cumulative distance
+    isFCycling = false; // Reset cycling state
+    clearInterval(cycleInterval); // Stop any ongoing cycling
+    cycleInterval = null;
+    document.querySelectorAll('.trail-element').forEach(el => {
+      trailContainer.removeChild(el);
+    });
     
     const success = await fetchAllImages(slug);
     if (success) {
       initializeCursorImage();
+    } else {
+      alert('Failed to load images for this channel.');
     }
   });
 
   // Initial load with default channel
   (async () => {
-    // Pre-fill input field with formatted default URL
     document.getElementById('channel-url').value = DEFAULT_DISPLAY_URL;
     
-    // Load default channel
     const success = await fetchAllImages(DEFAULT_SLUG);
     if (success) {
       initializeCursorImage();
@@ -261,9 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to update placeholder based on window width
   function updatePlaceholder() {
     if (window.innerWidth < 768) {
-      channelInput.placeholder = 'Paste link'; // Short placeholder for mobile
+      channelInput.placeholder = 'Paste link';
     } else {
-      channelInput.placeholder = 'Paste Are.na channel link'; // Long placeholder for desktop
+      channelInput.placeholder = 'Paste Are.na channel link';
     }
   }
 
