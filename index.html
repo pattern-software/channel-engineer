@@ -4,27 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Channel Engineer</title>
-   
+    <link rel="icon" href="favicon.svg?v=1" type="image/svg+xml">
+    <link rel="alternate icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="motion-blur.css">
 </head>
 <body>
-
     <div id="pg-centre">
         <div id="centre">
-        <div id="logo"><img src="gear.svg" alt="gear"><h1>C.E.</h1></div><h1><span style="color: #808080;">Channel Engineer</span></h1>
+            <div id="logo"><div class="logo-rect"></div><h1>C.E.</h1></div>
+            <h1><span style="color: #808080;">Channel Engineer</span></h1>
         </div>
     </div>
 
     <div class="channel-input-wrapper">
-        <input type="text" id="channel-url" placeholder="Paste Are.na channel link" spellcheck="false" />
-        <button id="change-channel-btn">Change channel</button>
+        <input type="text" id="channel-url" placeholder="Paste Are.na channel link" spellcheck="false" aria-label="Enter Are.na channel URL" />
+        <button id="change-channel-btn">
+            <span class="btn-content">
+                <img class="btn-icon" src="channel.svg" alt="Channel icon">
+                Change channel
+            </span>
+        </button>
     </div>
 
+    <h1 id="key-hint" title="Use spacebar to download the current image or F to cycle images backward on desktop">
+        <span class="hint-content">
+            <img class="hint-icon" src="controls.svg" alt="Controls icon">
+            <span><span style="color: #B7B7B7;">Space</span> to download, <span style="color: #B7B7B7;">F</span> to go backwards</span>
+        </span>
+    </h1>
+
     <div class="container">
-        <div class="logo-trail">
-        </div>
+        <div class="logo-trail"></div>
     </div>
     <script src="script.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'933039a30958add1',t:'MTc0NTEwNTc5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'933475680ab653d2',t:'MTc0NTE1MDE4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
