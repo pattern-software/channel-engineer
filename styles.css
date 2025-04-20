@@ -23,15 +23,14 @@ body {
 
 h1 {
   font-family: "everett";
-  font-weight: 500; /* Medium */
+  font-weight: 500;
   color: #E5E5E5;
   font-size: 1.6em;
 }
 
 h2 {
-  font-family: "everett";
-  font-family: "MyFont", sans-serif;
-  font-weight: 400; /* Regular */
+  font-family: "everett", "MyFont", sans-serif;
+  font-weight: 400;
   color: white;
 }
 
@@ -39,6 +38,29 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
+}
+
+.logo-rect {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #333;
+  border-radius: 12px;
+  /* Doubled gradient for seamless looping */
+  background: linear-gradient(180deg, 
+    #BC3FDF 0%, #4239FF 8%, #0AF2EA 16%, #2EFF37 24%, #FF8114 32%, #FF273B 40%,
+    #BC3FDF 50%, #4239FF 58%, #0AF2EA 66%, #2EFF37 74%, #FF8114 82%, #FF273B 90%, #BC3FDF 100%
+  );
+  background-size: 100% 200%;
+  animation: slideGradient 1.2s linear infinite;
+}
+
+@keyframes slideGradient {
+  0% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 100% 0%;
+  }
 }
 
 #centre {
@@ -64,16 +86,9 @@ h2 {
 .trail-element {
   width: 20vw;
   height: 20vw;
-  object-fit: contain; /* Preserve original aspect ratio */
-  object-position: center; /* Center the image */
-}
-
-@media (max-width: 767px) {
-  .cursor-image,
-  .trail-element {
-      width: 40vw; /* Larger size for mobile */
-      height: 40vw;
-  }
+  object-fit: contain;
+  object-position: center;
+  will-change: transform;
 }
 
 .channel-input-wrapper {
@@ -96,39 +111,163 @@ h2 {
   padding: 0.7em 1em;
   font-size: 1em;
   border-radius: 0.8em;
-  border: 1px solid transparent;
-  transition: ease-in-out 0.2s;
+  border: 3px solid transparent;
+  transition: ease-in-out 0.05s;
 }
 
-/* Remove default outline and customize focus state */
+
 #channel-url:focus {
-  outline: none; /* Removes the default blue outline */
-  background: #4a4a4a; /* Slightly lighter gray background for focus */
-  border: 1px solid #E5E5E5; /* Add a light border for visibility */
-  transition: ease-in-out 0.2s;
+  outline: none;
+  background: #4a4a4a;
+  transition: ease-in-out 0.05s;
 }
 
-/* Customize hover state */
+
 #channel-url:hover {
-  background: #4a4a4a; /* Slightly lighter gray background for hover */
-  border: 1px solid #E5E5E5; /* Add a light border for visibility */
-  transition: ease-in-out 0.2s;
+  background: #4a4a4a;
+  border: 3px solid #caff57;
+  transition: ease-in-out 0.05s;
 }
 
 #change-channel-btn {
   border-radius: 0.8em;
-  background: #323232;
+  background: #E5E5E5;
   font-family: everett;
-  color: #989898;
-  font-weight: 500; /* Medium */
+  color: #111111;
+  font-weight: 500;
   padding: 0.7em 1em;
   font-size: 1em;
   border: none;
   cursor: pointer;
-  transition: ease-in-out 0.2s;
+  transition: background 0.2s ease-in-out;
+  border: 3px solid transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#change-channel-btn .btn-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.2em;
+}
+
+#change-channel-btn .btn-icon {
+  width: 1em;
+  height: 1em;
 }
 
 #change-channel-btn:hover {
-  color: #E5E5E5;
-  transition: ease-in-out 0.2s;
+
+  
+  color: #111111;
+  background: linear-gradient(180deg, 
+    #BC3FDF 0%, #4239FF 8%, #0AF2EA 16%, #2EFF37 24%, #FF8114 32%, #FF273B 40%,
+    #BC3FDF 50%, #4239FF 58%, #0AF2EA 66%, #2EFF37 74%, #FF8114 82%, #FF273B 90%, #BC3FDF 100%
+  );
+  background-size: 100% 200%;
+  animation: slideGradient 1.2s linear infinite;
+  border: 3px solid #caff57;
 }
+
+#key-hint {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: everett;
+  font-weight: 400;
+  color: #5C5C5C;
+  font-size: 1em;
+  z-index: 10;
+  text-align: center;
+  width: auto;
+  margin: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  background-color: #191919;
+  padding: 0.8em;
+  border-radius: 1em;
+}
+
+#key-hint .hint-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+#key-hint .hint-icon {
+  width: 1em;
+  height: 1em;
+}
+
+
+
+@media (max-width: 440px) {
+  #key-hint {
+    display: none;
+  }
+
+  .cursor-image,
+  .trail-element {
+    width: 40vw;
+    height: 40vw;
+  }
+
+  #pg-centre {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+  }
+
+  #centre {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+
+  .channel-input-wrapper {
+    position: absolute;
+    top: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: center;
+    z-index: 10;
+    width: 100vw;
+  }
+
+  #channel-url {
+    font-family: everett;
+    font-weight: 400;
+    color: #E5E5E5;
+    background: #323232;
+    width: auto;
+    padding: 0.7em 1em;
+    font-size: 1em;
+    border-radius: 0.8em;
+    border: 3px solid transparent;
+    transition: ease-in-out 0.05s;
+    width: 80vw;
+  }
+
+  #change-channel-btn {
+   width: 80vw;
+
+  }
+
+}
+
+
