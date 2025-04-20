@@ -1,0 +1,19 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#BC3FDF"/>
+      <stop offset="16%" style="stop-color:#4239FF"/>
+      <stop offset="32%" style="stop-color:#0AF2EA"/>
+      <stop offset="48%" style="stop-color:#2EFF37"/>
+      <stop offset="64%" style="stop-color:#FF8114"/>
+      <stop offset="80" style="stop-color:#FF273B"/>
+      <stop offset="100%" style="stop-color:#BC3FDF"/>
+    </linearGradient>
+    <style>
+      rect {
+        fill: url(#gradient);      
+    }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="32" height="32"/>
+</svg>
